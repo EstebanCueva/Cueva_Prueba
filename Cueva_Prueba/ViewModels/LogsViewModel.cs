@@ -1,10 +1,6 @@
-﻿using Android.App.Job;
-using System;
-using System.Collections.Generic;
+﻿
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Cueva_Prueba.Logs;
 
 namespace Cueva_Prueba.ViewModels
 {
