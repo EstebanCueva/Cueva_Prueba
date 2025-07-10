@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using Cueva_Prueba.Models;
+using Cueva_Prueba.Services;
+using Cueva_Prueba.Logs;
 
 namespace Cueva_Prueba.ViewModels
 {
@@ -37,8 +38,8 @@ namespace Cueva_Prueba.ViewModels
             }
         }
 
-        private int _tiempoPreparacion;
-        public int TiempoPreparacion
+        private string _tiempoPreparacion;
+        public string TiempoPreparacion
         {
             get => _tiempoPreparacion;
             set
@@ -67,14 +68,24 @@ namespace Cueva_Prueba.ViewModels
 
         private RecetaDatabase db;
 
+        public ICommand GuardarRecetaCommand { get; }
+
         public RecetaFormViewModel(RecetaDatabase database)
         {
             db = database;
+
+            GuardarRecetaCommand = new Command(async () => await GuardarRecetaAsync());
         }
 
         public async Task GuardarRecetaAsync()
         {
-            if (!EsVegetariana && TiempoPreparacion > 180)
+            if (!int.TryParse(TiempoPreparacion, out int tiempo))
+            {
+                await Shell.Current.DisplayAlert("Error", "Tiempo inválido", "OK");
+                return;
+            }
+
+            if (!EsVegetariana && tiempo > 180)
             {
                 await Shell.Current.DisplayAlert("Error", "Tiempo excesivo para receta no vegetariana", "OK");
                 return;
@@ -84,16 +95,20 @@ namespace Cueva_Prueba.ViewModels
             {
                 Nombre = Nombre,
                 Ingredientes = Ingredientes,
-                TiempoPreparacionMinutos = TiempoPreparacion,
+                TiempoPreparacionMinutos = tiempo,
                 EsVegetariana = EsVegetariana
             };
 
             await db.SaveRecetaAsync(receta);
             LogService.AppendLog(receta.Nombre);
-
             RecetaEvents.OnRecetaGuardada();
 
             await Shell.Current.DisplayAlert("Éxito", "Receta guardada", "OK");
+
+            Nombre = string.Empty;
+            Ingredientes = string.Empty;
+            TiempoPreparacion = string.Empty;
+            EsVegetariana = false;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
